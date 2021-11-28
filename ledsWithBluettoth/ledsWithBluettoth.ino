@@ -5,7 +5,7 @@
 #include <MD_MAX72xx.h >
 #include <SoftwareSerial.h>
 
-#define __DEBUG__
+// #define __DEBUG__
 
 // OK, in te future all those strings will be in an external file so they do not take place but in the meantime....
 #define MY_TALE1 \
@@ -336,8 +336,8 @@ void showDotByDot(String my_text, uint8_t p_delay) {
     tot_dots += numberOfOnes(text[i]);
   }
 
-  PRINT(">>> text_length : ", text_length);
-  PRINTLN(", tot_dots : ", tot_dots);
+  // PRINT(">>> text_length : ", text_length);
+  // PRINTLN(", tot_dots : ", tot_dots);
 
   // 3> Now show dot a dot
   uint8_t text_shown[MAX_DEVICES * MAX_COLS_PER_DEVICE] = {0};
@@ -472,12 +472,14 @@ void loop() {
         RENDERING_TALE = true;
         IND_CURR_TALE = getRandom(TOT_TALES);
         IND_LINE_CURR_TALE = 0;
-        PRINTLN(">>> Pick a new tale : ", IND_CURR_TALE);
+        // PRINTLN(">>> Pick a new tale : ", IND_CURR_TALE);
       }
 
       // char* line=getLine(MY_TALES[IND_CURR_TALE], IND_LINE_CURR_TALE);
       String line=getLine(MY_TALES[IND_CURR_TALE], IND_LINE_CURR_TALE);
-      PRINTLN(">>> Let's show the line : ", line);
+      PRINT("Show the line : [", line);
+      PRINTLN("]", "");
+      
       processMessage(line);
       ++IND_LINE_CURR_TALE ;
 
@@ -544,7 +546,7 @@ void processMessage(String message ) {
   }
 
   if ( !process_effect || !s_effect.length()) s_effect = 'S';
-  if ( !process_speed || !s_speed.length()) s_speed = 'I';
+  if ( !process_speed || !s_speed.length()) s_speed = 'M';
 
   PRINT("Effect : ", s_effect);
   PRINT(", Speed : ", s_speed);
