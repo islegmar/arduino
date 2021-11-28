@@ -5,32 +5,77 @@
 #include <MD_MAX72xx.h >
 #include <SoftwareSerial.h>
 
-// TODO : unbtil we find a better way to manage the length of arrays in C++ we have to llok for an END
-String TALE[] = { 
-"- Erase una vez una nina que se llamaba Caperucita Amarilla.",
-"- No, Roja!",
-"- Ah!, si, Caperucita Roja. Su mama la llamo y le dijo: Escucha, Caperucita Verde",
-"- Que no, Roja!",
-"- Ah!, si, Roja. Ve a casa de tia Diomira a llevarle esta piel de patata",
-"- No: Ve a casa de la abuelita a llevarle este pastel",
-"- Bien. La nina se fue al bosque y se encontro una jirafa",
-"- Que lio! Se encontro al lobo, no una jirafa.",
-"- Y el lobo le pregunto: Cuantas son seis por ocho?",
-"- Que va! El lobo le pregunto: Adonde vas?",
-"- Tienes razon. Y Caperucita Negra respondio",
-"- Era Caperucita Roja, Roja, Roja!",
-"- Si. Y respondio: Voy al mercado a comprar salsa de tomate",
-"- Que va!: Voy a casa de la abuelita, que esta enferma, pero no recuerdo el camino",
-"- Exacto. Y el caballo dijo",
-"- Que caballo? Era un lobo",
-"- Seguro. Y dijo: Toma el tranvia numero setenta y cinco, baja en la plaza de la Catedral, tuerce a la derecha, y encontraras tres peldanos y una moneda en el suelo; deja los tres peldanos, recoge la moneda y comprate un chicle",
-"- Tu no sabes contar cuentos en absoluto, abuelo. Los enredas todos. Pero no importa, me compras un chicle?",
-"- Bueno, toma la moneda.",
-"Y el abuelo siguio leyendo el periódico.",
-"\0"
-};
-uint16_t POS_TALE = 0;
+#define __DEBUG__
+
+// OK, in te future all those strings will be in an external file so they do not take place but in the meantime....
+#define MY_TALE1 \
+  "- Te devorare -dijo la Pantera\0" \
+  "- Peor para ti -dijo la\0" \
+  "D;F#Espada\0"\
+  "\0"
+
+#define MY_TALE2 \
+  "La mujer que ame se ha convertido en fantasma\0" \
+  "Yo soy el lugar de las apariciones\0" \
+  "\0"
+
+#define MY_TALE3 \
+  "No olvide usted, senyora, las noches en que nuestras almas lucharon\0" \
+  "D;F#cuerpo\0"\
+  "D;F#a\0"\
+  "D;F#cuerpo\0"\
+  "\0"
+
+#define MY_TALE4 \
+  "Traedeme el caballo mas veloz\0" \
+  "pidio el hombre mas honrado\0"\
+  "Acabo de decirle la verdad al rey\0"\
+  "\0"
+
+#define MY_TALE5 \
+  "Cuando desperto el dinosaurio\0" \
+  "todavia estaba\0"\
+  "D;S#alli\0"\
+  "\0"
+
+#define MY_TALE6 \
+  "Mi madre me ajusta el cuello del abrigo,\0" \
+  "no porque empieza a nevar,\0"\
+  "sino para que empiece a nevar\0"\
+  "\0"
+  
+#define MY_TALE7 \
+  "Esas sirenas enloquecidas que aullan\0" \
+  "recorriendo la ciudad en busca de\0"\
+  "D;M#Ulises\0"\
+  "\0"
+
+#define MY_TALE8 \
+  "Estabas a ras de tierra y no te vi\0" \
+  "Tuve que cavar hasta el fondo de mi para encontrarte\0"\
+  "\0"
+
+#define MY_TALE9 \
+  "Mientras subia y subia,\0"\
+  "el globo lloraba al ver que se le escapaba el ninyo\0"\
+  "\0"
+
+char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, "\0"};
+// char* MY_TALES[] = { MY_TALE6, "\0"};
+
 #define WAIT_MILIS 2000    // How many milis we wait for messages from Serial before continue with the tale
+
+// We have a "problem" here : how to we know if actually we are showing a tale? One way
+// wold be using the value of IND_CURR_TALE but then I have to assign (there are no NULLs here) an special
+// value that could be
+// - -1 => but then we have to pass from uint16_t  => int (more space)
+// 0 and the index start counting from 1 => that means problems
+// So the clearest solutiob is the use of the auxilliary boolean REMDERING_TALE
+uint8_t TOT_TALES = 0;
+bool RENDERING_TALE = false;
+uint16_t IND_CURR_TALE = 0;
+uint16_t IND_LINE_CURR_TALE = 0;
+uint16_t TOT_LINES_CURR_TALE = 0;
 unsigned long START_TIME = 0; // How many milis we're waiting
 
 
@@ -41,7 +86,6 @@ unsigned long START_TIME = 0; // How many milis we're waiting
 #define RX_PIN 2     // BLUE 
 #define TX_PIN 3     // BLUE
 
-// #define __DEBUG__
 
 #ifdef __DEBUG__
 #define PRINT(a)    { Serial.print(a); }
@@ -49,9 +93,9 @@ unsigned long START_TIME = 0; // How many milis we're waiting
 #define PRINT(x, y) { Serial.print(x); Serial.print(y); }
 #define PRINTLN(x, y) { Serial.print(x); Serial.println(y); }
 #else
-#define PRINT(a)    
-#define PRINTLN(a)  
-#define PRINT(x, y) 
+#define PRINT(a)
+#define PRINTLN(a)
+#define PRINT(x, y)
 #define PRINTLN(x, y)
 #endif
 
@@ -70,6 +114,98 @@ SoftwareSerial BT(RX_PIN, TX_PIN);
 // FUNCTIONS : Utilities
 //
 // ====================================================================
+
+// ====================================================================
+// TALE
+// A TALE is a char* composed by several lines where:
+// - Every line ends with \0
+// - A line only with \0 is the end of the Tale
+// TODO : we repeat portions of the same code several times, we should
+//        optimize if creating a generic function
+// ====================================================================
+
+uint16_t getNumLines(char* tale) {
+  uint16_t num_lines = 0;
+  uint16_t length_line = 0;
+
+  while ( *tale || length_line != 0 ) {
+    if ( !*tale ) {
+      ++ num_lines;
+      length_line = 0;
+    } else {
+      ++length_line;
+    }
+    ++tale;
+
+  }
+
+  return num_lines;
+}
+
+/**
+   Get the length of a certain line
+*/
+uint16_t getLineLength(char* tale, uint16_t ind_line) {
+  uint16_t curr_line_ind = 0;
+  uint16_t curr_line_length = 0;
+
+  // While it is not the end of the tale (that is, a line with only \0)
+  while ( *tale || curr_line_length != 0 ) {
+    // End of a line
+    if ( !*tale ) {
+      // We have found the line we where asking for
+      if ( curr_line_ind == ind_line ) {
+        break;
+        // Next line
+      } else {
+        ++ curr_line_ind ;
+        curr_line_length = 0;
+      }
+      // Normal character
+    } else {
+      ++curr_line_length;
+    }
+    ++tale;
+  }
+
+  // TODO : return null in case they ask for a line non existing
+  return curr_line_length;
+}
+
+String getLine(char* tale, uint16_t ind_line) {
+  // char* line = (char *)malloc(getLineLength(tale, ind_line) + 1);
+  String line="";
+  uint16_t curr_line_ind = 0;
+  uint16_t curr_line_length = 0;
+
+  //char* p_line = line;
+  // While it is not the end of the tale (that is, a line with only \0)
+  while ( *tale || curr_line_length != 0 ) {
+    // End of a line
+    if ( !*tale ) {
+      // We have found the line we where asking for
+      if ( curr_line_ind == ind_line ) {
+        break;
+        // Next line
+      } else {
+        ++ curr_line_ind ;
+        curr_line_length = 0;
+      }
+      // Normal character
+    } else {
+      if ( curr_line_ind == ind_line ) {
+        //*p_line++ = *tale;
+        line += *tale;
+      }
+      ++curr_line_length;
+    }
+    ++tale;
+  }
+  //*p_line = '\0';
+
+  return line;
+}
+
 
 /**
     Count the number of ones this number has
@@ -219,21 +355,23 @@ void showDotByDot(String my_text, uint8_t p_delay) {
         break;
       }
     }
+    /*
     PRINT("[", tot_dots);
     PRINT("] rnd_col : ", rnd_col);
     PRINT(", text_to_be_shown : ", text[rnd_col]);
     PRINT(", text_shown_until_now: ", text_shown[rnd_col]);
-
+    */
+    
     // Now get the next mask
     text_shown[rnd_col] = getNextMask(text[rnd_col], text_shown[rnd_col]);
 
-    PRINT(", text_shown_now : ", text_shown[rnd_col]);
+    // PRINT(", text_shown_now : ", text_shown[rnd_col]);
 
     ind_display_to_show = getDisplay(text_length - rnd_col, MAX_DEVICES, MAX_COLS_PER_DEVICE);
     ind_col_to_show = getColumn (text_length - rnd_col, MAX_DEVICES, MAX_COLS_PER_DEVICE);
-    
-    PRINT(", display : ", ind_display_to_show );
-    PRINTLN(", column : ", ind_col_to_show);
+
+    // PRINT(", display : ", ind_display_to_show );
+    // PRINTLN(", column : ", ind_col_to_show);
 
     mx.setColumn(
       ind_display_to_show,
@@ -304,6 +442,14 @@ void setup() {
 
   BT.begin(9600);
   START_TIME = millis();
+
+  // Total of tales
+  char** tale = MY_TALES;
+  TOT_TALES = 0;
+  while ( **tale ) {
+    ++TOT_TALES;
+    ++tale;
+  }
 }
 
 String state = "";
@@ -319,38 +465,45 @@ void loop() {
     processMessage(state);
     state = "";
   } else {
+    // We have waited enough, let's render a new line of the tale
+    // or pick a tale if we are not rendering one
     if ( (millis() - START_TIME ) > WAIT_MILIS ) {
-      PRINTLN("We have waited so let's show the line : ", POS_TALE);
-      START_TIME=millis();
-      if ( TALE[POS_TALE][0]=='\0' ) {
-        PRINTLN("We have arrived to the end of the tale", "");
-        POS_TALE=0;
-      } else {
-        PRINTLN("Let's show the line : ", TALE[POS_TALE]);
+      if ( !RENDERING_TALE || IND_LINE_CURR_TALE == getNumLines(MY_TALES[IND_CURR_TALE])) {
+        RENDERING_TALE = true;
+        IND_CURR_TALE = getRandom(TOT_TALES);
+        IND_LINE_CURR_TALE = 0;
+        PRINTLN(">>> Pick a new tale : ", IND_CURR_TALE);
       }
-      processMessage(TALE[POS_TALE++]);    
-    }   
+
+      // char* line=getLine(MY_TALES[IND_CURR_TALE], IND_LINE_CURR_TALE);
+      String line=getLine(MY_TALES[IND_CURR_TALE], IND_LINE_CURR_TALE);
+      PRINTLN(">>> Let's show the line : ", line);
+      processMessage(line);
+      ++IND_LINE_CURR_TALE ;
+
+      START_TIME = millis();
+    }
   }
 }
 
 /**
-   message has the form:
-     [command#]text
-   where command is optional y can have the form:
-     effect;speed
-   where (all are optional):
-     - effect:
-       + S : Scroll (default)
-       + D : Dot by dot
-     - speed:
-       + I : Instantaneus
-       + S : Slow
-       + M : Medium (default)
-       + F : Fast
+  message has the form:
+  [command#]text
+  where command is optional y can have the form:
+  effect;speed
+  where (all are optional):
+  - effect:
+   + S : Scroll (default)
+   + D : Dot by dot
+  - speed:
+   + I : Instantaneus
+   + S : Slow
+   + M : Medium (default)
+   + F : Fast
 */
 void processMessage(String message ) {
-  Serial.print(">>> Message : ");
-  Serial.println(message);
+  PRINT(">>> Message : [", message);
+  PRINTLN("]", "");
 
   // Get the effect, the configuration and the text
   String s_text = "";
@@ -384,14 +537,14 @@ void processMessage(String message ) {
       }
     }
   }
-  // It the message did not cotain an # means all the message is text
+  // It the message did not contain an # means all the message is text
   if ( !process_text ) {
     process_effect = false;
     s_text = message;
   }
 
-  if ( !process_effect ) s_effect = 'S';
-  if ( !process_speed ) s_speed = 'M';
+  if ( !process_effect || !s_effect.length()) s_effect = 'S';
+  if ( !process_speed || !s_speed.length()) s_speed = 'I';
 
   PRINT("Effect : ", s_effect);
   PRINT(", Speed : ", s_speed);
