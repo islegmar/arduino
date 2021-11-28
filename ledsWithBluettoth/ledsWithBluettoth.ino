@@ -5,6 +5,35 @@
 #include <MD_MAX72xx.h >
 #include <SoftwareSerial.h>
 
+// TODO : unbtil we find a better way to manage the length of arrays in C++ we have to llok for an END
+String TALE[] = { 
+"- Erase una vez una nina que se llamaba Caperucita Amarilla.",
+"- No, Roja!",
+"- Ah!, si, Caperucita Roja. Su mama la llamo y le dijo: Escucha, Caperucita Verde",
+"- Que no, Roja!",
+"- Ah!, si, Roja. Ve a casa de tia Diomira a llevarle esta piel de patata",
+"- No: Ve a casa de la abuelita a llevarle este pastel",
+"- Bien. La nina se fue al bosque y se encontro una jirafa",
+"- Que lio! Se encontro al lobo, no una jirafa.",
+"- Y el lobo le pregunto: Cuantas son seis por ocho?",
+"- Que va! El lobo le pregunto: Adonde vas?",
+"- Tienes razon. Y Caperucita Negra respondio",
+"- Era Caperucita Roja, Roja, Roja!",
+"- Si. Y respondio: Voy al mercado a comprar salsa de tomate",
+"- Que va!: Voy a casa de la abuelita, que esta enferma, pero no recuerdo el camino",
+"- Exacto. Y el caballo dijo",
+"- Que caballo? Era un lobo",
+"- Seguro. Y dijo: Toma el tranvia numero setenta y cinco, baja en la plaza de la Catedral, tuerce a la derecha, y encontraras tres peldanos y una moneda en el suelo; deja los tres peldanos, recoge la moneda y comprate un chicle",
+"- Tu no sabes contar cuentos en absoluto, abuelo. Los enredas todos. Pero no importa, me compras un chicle?",
+"- Bueno, toma la moneda.",
+"Y el abuelo siguio leyendo el periódico.",
+"\0"
+};
+uint16_t POS_TALE = 0;
+#define WAIT_MILIS 2000    // How many milis we wait for messages from Serial before continue with the tale
+unsigned long START_TIME = 0; // How many milis we're waiting
+
+
 // PINS
 #define CLK_PIN 13   // LED : or SCK
 #define DATA_PIN 11  // LED : or MOSI
@@ -12,27 +41,24 @@
 #define RX_PIN 2     // BLUE 
 #define TX_PIN 3     // BLUE
 
-#define DEBUG 1
+// #define __DEBUG__
 
-#if DEBUG
+#ifdef __DEBUG__
 #define PRINT(a)    { Serial.print(a); }
-#define PRINT(a, b) { Serial.print(a); Serial.println(b); }
-// #define PRINT(a, b, c) { Serial.print(a); Serial.print(b); Serial.println(c); }
-// #define PRINT(a, b, c, d) { Serial.print(a); Serial.print(b); Serial.print(c); Serial.println(d); }
-// #define PRINT(a, b, c, d, e) { Serial.print(a); Serial.print(b); Serial.print(c); Serial.print(d); Serial.println(e); }
+#define PRINTLN(a)  { Serial.println(a); }
+#define PRINT(x, y) { Serial.print(x); Serial.print(y); }
+#define PRINTLN(x, y) { Serial.print(x); Serial.println(y); }
 #else
-#define PRINT(s)
-#define PRINT(s, x)
-// #define PRINT(a, b, c) 
-// #define PRINT(a, b, c, d) 
-// #define PRINT(a, b, c, d, e) 
+#define PRINT(a)    
+#define PRINTLN(a)  
+#define PRINT(x, y) 
+#define PRINTLN(x, y)
 #endif
 
 // LED
 #define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW
 #define MAX_DEVICES 4
 #define MAX_COLS_PER_DEVICE 8
-#define DELAYTIME 30 // in milliseconds
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
@@ -144,7 +170,7 @@ uint8_t getColumn(uint8_t curr_length, uint8_t num_displays, uint8_t num_cols_pe
 /**
    Show a text dot my dot
 */
-void showDotByDot(String my_text) {
+void showDotByDot(String my_text, uint8_t p_delay) {
   uint8_t charWidth;
   uint8_t cBuf[8]; // this should be ok for all built-in fonts
 
@@ -174,12 +200,8 @@ void showDotByDot(String my_text) {
     tot_dots += numberOfOnes(text[i]);
   }
 
-  Serial.print(">>> text_length : ");
-  Serial.print(text_length);
-  Serial.print(", tot_dots : ");
-  Serial.println(tot_dots);
-
-
+  PRINT(">>> text_length : ", text_length);
+  PRINTLN(", tot_dots : ", tot_dots);
 
   // 3> Now show dot a dot
   uint8_t text_shown[MAX_DEVICES * MAX_COLS_PER_DEVICE] = {0};
@@ -197,12 +219,22 @@ void showDotByDot(String my_text) {
         break;
       }
     }
+    PRINT("[", tot_dots);
+    PRINT("] rnd_col : ", rnd_col);
+    PRINT(", text_to_be_shown : ", text[rnd_col]);
+    PRINT(", text_shown_until_now: ", text_shown[rnd_col]);
 
     // Now get the next mask
     text_shown[rnd_col] = getNextMask(text[rnd_col], text_shown[rnd_col]);
 
+    PRINT(", text_shown_now : ", text_shown[rnd_col]);
+
     ind_display_to_show = getDisplay(text_length - rnd_col, MAX_DEVICES, MAX_COLS_PER_DEVICE);
     ind_col_to_show = getColumn (text_length - rnd_col, MAX_DEVICES, MAX_COLS_PER_DEVICE);
+    
+    PRINT(", display : ", ind_display_to_show );
+    PRINTLN(", column : ", ind_col_to_show);
+
     mx.setColumn(
       ind_display_to_show,
       ind_col_to_show,
@@ -210,14 +242,14 @@ void showDotByDot(String my_text) {
     );
 
     --tot_dots;
-    delay(DELAYTIME);
+    delay(p_delay);
   }
 }
 
 /**
    Scroll a text from LEFT -> RIGT
 */
-void scrollText(String my_text) {
+void scrollText(String my_text, uint8_t p_delay) {
   uint8_t charWidth;
   uint8_t cBuf[8]; // this should be ok for all built-in fonts
   // This represents all the text that can be shown in the display
@@ -253,7 +285,7 @@ void scrollText(String my_text) {
           --indCol;
         }
       }
-      delay(DELAYTIME);
+      delay(p_delay);
     }
   }
 }
@@ -271,10 +303,7 @@ void setup() {
   mx.clear();
 
   BT.begin(9600);
-
-  processEntry("Hola");
-  processEntry("D#Adios");
-  processEntry("S#Hi");
+  START_TIME = millis();
 }
 
 String state = "";
@@ -285,44 +314,106 @@ void loop() {
     state += c;
   }
 
+
   if ( state.length() > 0 ) {
-    processEntry(state);
+    processMessage(state);
     state = "";
+  } else {
+    if ( (millis() - START_TIME ) > WAIT_MILIS ) {
+      PRINTLN("We have waited so let's show the line : ", POS_TALE);
+      START_TIME=millis();
+      if ( TALE[POS_TALE][0]=='\0' ) {
+        PRINTLN("We have arrived to the end of the tale", "");
+        POS_TALE=0;
+      } else {
+        PRINTLN("Let's show the line : ", TALE[POS_TALE]);
+      }
+      processMessage(TALE[POS_TALE++]);    
+    }   
   }
 }
 
-void processMessagey(String message ) {
-  PRINT(">>> Entry : ", message);
-  
+/**
+   message has the form:
+     [command#]text
+   where command is optional y can have the form:
+     effect;speed
+   where (all are optional):
+     - effect:
+       + S : Scroll (default)
+       + D : Dot by dot
+     - speed:
+       + I : Instantaneus
+       + S : Slow
+       + M : Medium (default)
+       + F : Fast
+*/
+void processMessage(String message ) {
+  Serial.print(">>> Message : ");
+  Serial.println(message);
+
   // Get the effect, the configuration and the text
-  String effect = "";
-  String text = "";
+  String s_text = "";
+  String s_speed = "";
+  String s_effect = "";
+
+  bool process_text = false;
+  bool process_speed = false;
   bool process_effect = true;
+
   for (uint8_t ind = 0; ind < message.length(); ++ind) {
     char ch = message[ind];
-    PRINT("Ch : ", ch);
-    if ( message[ind] == '#' ) {
-      process_effect = false;
+
+    if ( process_text ) {
+      s_text += ch;
     } else {
-      if ( process_effect ) {
-        effect += ch;
+      if ( ch == '#' ) {
+        process_text = true;
       } else {
-        text += ch;
+        if ( ch == ';' ) {
+          if ( process_effect ) {
+            process_speed = true;
+          }
+        } else {
+          if ( process_speed ) {
+            s_speed += ch;
+          } else if ( process_effect ) {
+            s_effect += ch;
+          }
+        }
       }
     }
   }
-  // If still is true means no # came so state is the string and
-  // the effect to apply is the default
-  if ( process_effect ) {
-    effect = 'S';
-    text = message;
+  // It the message did not cotain an # means all the message is text
+  if ( !process_text ) {
+    process_effect = false;
+    s_text = message;
   }
-  PRINT("Process Effect: ", process_effect);
-  PRINT("Effect : ", effect);
-  // PRINT("Text: ", text);
-  if ( effect == "D" ) {
-    showDotByDot(text);
+
+  if ( !process_effect ) s_effect = 'S';
+  if ( !process_speed ) s_speed = 'M';
+
+  PRINT("Effect : ", s_effect);
+  PRINT(", Speed : ", s_speed);
+  PRINT(", Text : ", s_text);
+
+  // Get the delay based on the speed
+  uint8_t i_delay = 0;
+  if ( s_speed == "I" ) {
+    i_delay = 0;
+  } else if ( s_speed == "S" ) {
+    i_delay = 60;
+  } else if ( s_speed == "F" ) {
+    i_delay = 10;
+  } else {
+    i_delay = 30;
+  }
+
+  PRINTLN(", i_delay : ", i_delay);
+
+  if ( s_effect == "D" ) {
+    showDotByDot(s_text, i_delay);
   } else  {
-    scrollText(text);
+    scrollText(s_text, i_delay);
   }
 }
