@@ -8,13 +8,16 @@
  */
 #ifdef __TALES__
 
-char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, "\0"};
+// char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, MY_TALE10, MY_TALE11, MY_TALE12, MY_TALE13, MY_TALE14, MY_TALE15, MY_TALE16, MY_TALE17, "\0"};
+char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, MY_TALE10, MY_TALE11, MY_TALE12, MY_TALE13, MY_TALE14, MY_TALE15, º  "\0"};
 uint8_t TOT_TALES = 0;
-bool RENDERING_TALE = false;
 uint16_t IND_CURR_TALE = 0;
 uint16_t IND_LINE_CURR_TALE = 0;
 uint16_t TOT_LINES_CURR_TALE = 0;
 unsigned long START_TIME = 0; // How many milis we're waiting
+// TODO : probably those two variables can ba just one
+bool RENDERING_TALE = false;
+bool CAN_TALES_BE_RENDERED = false;
 
 uint16_t getNumLines(char* tale) {
   uint16_t num_lines = 0;

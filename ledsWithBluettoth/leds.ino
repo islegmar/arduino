@@ -55,12 +55,12 @@ void showDotByDot(String my_text, uint8_t p_delay) {
       }
     }
     /*
-    PRINT("[", tot_dots);
-    PRINT("] rnd_col : ", rnd_col);
-    PRINT(", text_to_be_shown : ", text[rnd_col]);
-    PRINT(", text_shown_until_now: ", text_shown[rnd_col]);
+      PRINT("[", tot_dots);
+      PRINT("] rnd_col : ", rnd_col);
+      PRINT(", text_to_be_shown : ", text[rnd_col]);
+      PRINT(", text_shown_until_now: ", text_shown[rnd_col]);
     */
-    
+
     // Now get the next mask
     text_shown[rnd_col] = getNextMask(text[rnd_col], text_shown[rnd_col]);
 
@@ -145,6 +145,20 @@ void scrollText(String my_text, uint8_t p_delay) {
 void processMessage(String message ) {
   PRINT(">>> Message : [", message);
   PRINTLN("]", "");
+#ifdef __TALES__
+  if ( message == "@TALES" ) {
+    CAN_TALES_BE_RENDERED = true;
+    START_TIME = 0; // Start render just now, do not wait
+    PRINT("Tales On", "");
+    return;
+  } else if ( state == "@NOTALES" ) {
+    CAN_TALES_BE_RENDERED = false;
+    PRINT("Tales Off", "");
+    return;
+  }
+#endif
+
+  PRINTLN("Showing the message ...", "");
 
   // Get the effect, the configuration and the text
   String s_text = "";
@@ -213,8 +227,8 @@ void processMessage(String message ) {
 }
 
 /**
- *   Count the number of ones this number has
- */
+     Count the number of ones this number has
+*/
 uint8_t numberOfOnes(uint8_t value) {
   uint8_t tot = 0;
   while ( value > 0 ) {
