@@ -9,7 +9,7 @@
 #ifdef __TALES__
 
 // char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, MY_TALE10, MY_TALE11, MY_TALE12, MY_TALE13, MY_TALE14, MY_TALE15, MY_TALE16, MY_TALE17, "\0"};
-char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, MY_TALE10, MY_TALE11, MY_TALE12, MY_TALE13, MY_TALE14, MY_TALE15, º  "\0"};
+char* MY_TALES[] = { MY_TALE1, MY_TALE2, MY_TALE3, MY_TALE4, MY_TALE5, MY_TALE6, MY_TALE7, MY_TALE8, MY_TALE9, MY_TALE10, MY_TALE11, MY_TALE12, MY_TALE13, MY_TALE14, MY_TALE15, "\0"};
 uint8_t TOT_TALES = 0;
 uint16_t IND_CURR_TALE = 0;
 uint16_t IND_LINE_CURR_TALE = 0;
@@ -19,6 +19,11 @@ unsigned long START_TIME = 0; // How many milis we're waiting
 bool RENDERING_TALE = false;
 bool CAN_TALES_BE_RENDERED = false;
 
+/**
+ * Get the number of lines this tale has.
+ * 
+ * @param tale : the tale with all the lines
+ */
 uint16_t getNumLines(char* tale) {
   uint16_t num_lines = 0;
   uint16_t length_line = 0;
@@ -38,8 +43,11 @@ uint16_t getNumLines(char* tale) {
 }
 
 /**
-   Get the length of a certain line
-*/
+ * Get the length of a certain line in tale.
+ * 
+ * @param tale : the tale
+ * @param ind_tale : the number of the line (starting by 0)
+ */
 uint16_t getLineLength(char* tale, uint16_t ind_line) {
   uint16_t curr_line_ind = 0;
   uint16_t curr_line_length = 0;
@@ -67,6 +75,12 @@ uint16_t getLineLength(char* tale, uint16_t ind_line) {
   return curr_line_length;
 }
 
+/**
+ * Get the content of a certain line in a tale.
+ * 
+ * @param tale : the tale
+ * @param ind_tale : the position of the line in the tale (starting by 0)
+ */
 String getLine(char* tale, uint16_t ind_line) {
   // char* line = (char *)malloc(getLineLength(tale, ind_line) + 1);
   String line="";

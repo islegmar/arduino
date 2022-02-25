@@ -8,7 +8,6 @@
 #include "bluetooth.h"
 #include "tales.h"
 
-
 void setup() {
   Serial.begin(9600);
 
@@ -18,6 +17,8 @@ void setup() {
 #ifdef __BLUETOOTH__
   BT.begin(9600);
 #endif
+
+  processMessage("S#Hola");
 
 #ifdef __TALES__
   START_TIME = millis();

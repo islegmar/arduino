@@ -1,10 +1,41 @@
 #ifdef __LEDS__
 
+/**
+ * Process messages and if needed display then in the LED matrix.
+ * The messages can have the form:
+ * - @<command>
+ * - [command#]text
+ *   
+ * @<command>
+ * ===============
+ * - @TALES   : start to show tales (if TALES are active)
+ * - @NOTALES : stop showing tales
+ * 
+ * [command#]text
+ * ===============
+ * Show a text in the LED. 
+ * command is optional and it can have the form:
+ *  effect;speed
+ * where (all are optional):
+ * - effect:
+ *  + S : Scroll (default)
+ *  + D : Dot by dot
+ * - speed:
+ *  + I : Instantaneus
+ *  + S : Slow
+ *  + M : Medium (default)
+ *  + F : Fast
+ */
+ 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
+// ==========================================================
+// EFFECTS when moving text
+// ==========================================================
+
 /**
-   Show a text dot my dot
-*/
+ * Show a text dot my dot
+ */
 void showDotByDot(String my_text, uint8_t p_delay) {
   uint8_t charWidth;
   uint8_t cBuf[8]; // this should be ok for all built-in fonts
@@ -84,8 +115,8 @@ void showDotByDot(String my_text, uint8_t p_delay) {
 }
 
 /**
-   Scroll a text from LEFT -> RIGT
-*/
+ * Scroll a text from LEFT -> RIGT
+ */
 void scrollText(String my_text, uint8_t p_delay) {
   uint8_t charWidth;
   uint8_t cBuf[8]; // this should be ok for all built-in fonts
@@ -127,20 +158,12 @@ void scrollText(String my_text, uint8_t p_delay) {
   }
 }
 
+// ==========================================================
+// UTILITIES
+// ==========================================================
+
 /**
-  message has the form:
-  [command#]text
-  where command is optional y can have the form:
-  effect;speed
-  where (all are optional):
-  - effect:
-   + S : Scroll (default)
-   + D : Dot by dot
-  - speed:
-   + I : Instantaneus
-   + S : Slow
-   + M : Medium (default)
-   + F : Fast
+ * Process a message
 */
 void processMessage(String message ) {
   PRINT(">>> Message : [", message);
@@ -227,8 +250,8 @@ void processMessage(String message ) {
 }
 
 /**
-     Count the number of ones this number has
-*/
+ * Count the number of ones this number has
+ */
 uint8_t numberOfOnes(uint8_t value) {
   uint8_t tot = 0;
   while ( value > 0 ) {
@@ -242,8 +265,8 @@ uint8_t numberOfOnes(uint8_t value) {
 }
 
 /**
-   The mask represents the values in a column
-*/
+ * The mask represents the values in a column
+ */
 uint8_t getNextMask(uint8_t final_mask, uint8_t curr_mask ) {
   uint8_t value = final_mask ^ curr_mask; // XOR
   uint8_t one_to_find = getRandom(numberOfOnes(value)) + 1;
@@ -266,8 +289,8 @@ uint8_t getNextMask(uint8_t final_mask, uint8_t curr_mask ) {
 
 
 /**
-   Add a number representing a column in buffer, that contains all the columns displayed.
-*/
+  * Add a number representing a column in buffer, that contains all the columns displayed.
+  */
 uint8_t addColInBuffer(uint8_t *buffer, uint8_t col, uint8_t curr_length, uint8_t max_length) {
   // If there is no room, we have to shift the values
   if ( curr_length == max_length ) {
@@ -282,28 +305,28 @@ uint8_t addColInBuffer(uint8_t *buffer, uint8_t col, uint8_t curr_length, uint8_
   return curr_length + 1;
 }
 
-/*
-   Length | Quotient| Display
-   1-8    |   0     | 3
-   9-16   |   1     | 2
-   17-24  |   2     | 1
-   25-32  |   3     | 0
-*/
+/**
+ *  Length | Quotient| Display
+ *  1-8    |   0     | 3
+ *  9-16   |   1     | 2
+ *  17-24  |   2     | 1
+ *  25-32  |   3     | 0
+ */
 uint8_t getDisplay(uint8_t curr_length, uint8_t num_displays, uint8_t num_cols_per_display) {
   return (num_displays - 1) - ( (curr_length - 1) / num_cols_per_display);
 }
 
-/*
-   Modulus | Column
-   0       | 7
-   1       | 0
-   2       | 1
-   3       | 2
-   4       | 3
-   5       | 4
-   6       | 5
-   7       | 6
-*/
+/**
+ *  Modulus | Column
+ *  0       | 7
+ *  1       | 0
+ *  2       | 1
+ *  3       | 2
+ *  4       | 3
+ *  5       | 4
+ *  6       | 5
+ *  7       | 6
+ */
 uint8_t getColumn(uint8_t curr_length, uint8_t num_displays, uint8_t num_cols_per_display) {
   uint8_t col = curr_length % num_cols_per_display;
 
